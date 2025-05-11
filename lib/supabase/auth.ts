@@ -1,15 +1,9 @@
 "use server"
 
-import { createServerSupabaseClient } from "@/lib/supabase/server"
-import { hashPassword } from "@/lib/utils/password"
+import { createServerSupabaseClient } from "./server"
+import { hashPassword } from "../utils/password"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-
-export type RegisterResult = {
-  success: boolean
-  message: string
-  redirectTo?: string
-}
 
 export type AuthResult = {
   success: boolean
@@ -21,103 +15,7 @@ export type AuthResult = {
   }
 }
 
-export async function registerUser(formData: FormData): Promise<RegisterResult> {
-  // Validate form data
-  const name = formData.get("name") as string
-  const email = formData.get("email") as string
-  const phone = formData.get("phone") as string
-  const password = formData.get("password") as string
-
-  // Check if all fields are provided
-  if (!name || !email || !phone || !password) {
-    return {
-      success: false,
-      message: "All fields are required",
-    }
-  }
-
-  // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
-    return {
-      success: false,
-      message: "Please enter a valid email address",
-    }
-  }
-
-  try {
-    const supabase = createServerSupabaseClient()
-
-    // Hash the password before storing
-    const hashedPassword = hashPassword(password)
-
-    // Check if user already exists
-    const { data: existingUser } = await supabase.from("users").select("email").eq("email", email).single()
-
-    if (existingUser) {
-      return {
-        success: false,
-        message: "A user with this email already exists",
-      }
-    }
-
-    // Insert the new user
-    const { error, data } = await supabase
-      .from("users")
-      .insert({
-        name,
-        email,
-        phone,
-        password: hashedPassword,
-      })
-      .select("id")
-      .single()
-
-    if (error) {
-      console.error("Error registering user:", error)
-      return {
-        success: false,
-        message: "Failed to register user. Please try again.",
-      }
-    }
-
-    // Create a session for the new user
-    const sessionId = crypto.randomUUID()
-    const cookieStore = await cookies()
-
-    // Store session in Supabase
-    await supabase.from("sessions").insert({
-      id: sessionId,
-      user_id: data.id,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-    })
-
-    // Set the session cookie
-    cookieStore.set("session_id", sessionId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: "/",
-    })
-
-    return {
-      success: true,
-      message: "Registration successful!",
-      redirectTo: "/collection",
-    }
-  } catch (error) {
-    console.error("Error in registerUser:", error)
-    return {
-      success: false,
-      message: "An unexpected error occurred. Please try again.",
-    }
-  }
-}
-
-export async function signIn(formData: FormData): Promise<AuthResult> {
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
-
+export async function signIn(email: string, password: string): Promise<AuthResult> {
   if (!email || !password) {
     return {
       success: false,
@@ -251,12 +149,12 @@ export async function signOut() {
       // Delete the cookie
       cookieStore.delete("session_id")
     }
-
-    return { success: true }
   } catch (error) {
     console.error("Error signing out:", error)
-    return { success: false, error: "Failed to sign out" }
   }
+
+  // Redirect to home page
+  redirect("/")
 }
 
 export async function requireAuth() {

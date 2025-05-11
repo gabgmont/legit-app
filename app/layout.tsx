@@ -1,10 +1,20 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type React from "react"
+import type { Metadata } from "next"
+import { Montserrat_Alternates } from "next/font/google"
+import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+
+// Load Montserrat Alternates font
+const montserratAlternates = Montserrat_Alternates({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-montserrat-alternates",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: "Legit - Luxury Authentication",
+  description: "The digital seal of luxury authenticity",
 }
 
 export default function RootLayout({
@@ -13,8 +23,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${montserratAlternates.variable} font-montserrat`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

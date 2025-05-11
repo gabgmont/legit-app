@@ -8,6 +8,7 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ['drive.google.com'],
   },
 }
 
