@@ -4,8 +4,8 @@ import { useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { signIn } from "../actions/auth"
-import { LoadingAnimation, LoadingDots } from "@/components/loading-animation"
 import { Logo } from "@/components/logo"
+import { WatchLoadingAnimation } from "@/components/watch-loading-animation"
 
 export default function SignInScreen() {
   const router = useRouter()
@@ -33,7 +33,7 @@ export default function SignInScreen() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#050810] text-white">
+    <div className="flex flex-col h-[100dvh] bg-[#050810] text-white">
       {/* Logo and App Name */}
       <div className="flex items-center justify-center mt-8 mb-4">
         <Logo size="sm" />
@@ -58,8 +58,7 @@ export default function SignInScreen() {
         {isLoading && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-[#121620] p-8 rounded-xl flex flex-col items-center">
-              <LoadingAnimation size="lg" color="#4169e1" />
-              <p className="mt-4 text-white font-medium">Verifying credentials...</p>
+              <WatchLoadingAnimation size="lg" color="#4169e1" text="Verifying credentials" />
             </div>
           </div>
         )}
@@ -101,7 +100,15 @@ export default function SignInScreen() {
             {isLoading ? (
               <div className="flex items-center">
                 <span className="mr-2">Signing in</span>
-                <LoadingDots color="white" />
+                <span className="flex space-x-1">
+                  <span className="animate-pulse">.</span>
+                  <span className="animate-pulse" style={{ animationDelay: "0.2s" }}>
+                    .
+                  </span>
+                  <span className="animate-pulse" style={{ animationDelay: "0.4s" }}>
+                    .
+                  </span>
+                </span>
               </div>
             ) : (
               "Enter"
@@ -109,8 +116,7 @@ export default function SignInScreen() {
           </button>
         </form>
 
-        {/* Home Indicator */}
-        <div className="w-32 h-1 bg-white rounded-full mx-auto mt-auto"></div>
+        {/* Removed home indicator */}
       </div>
     </div>
   )

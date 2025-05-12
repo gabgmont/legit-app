@@ -3,37 +3,67 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { ProductCard } from "@/types/product"
-import { registerProduct } from "../actions/product"
+import { fetchProductById, registerProductForUser } from "../actions/product"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { ProductImage } from "@/components/product-image"
 import { getRarityColor } from "@/utils/rarity"
+
+// Define the QR code payload structure
+interface QRCodePayload {
+  id: string
+  nonce: number
+}
 
 export default function ProductRegistrationContent() {
   const router = useRouter()
   const [isRegistering, setIsRegistering] = useState(false)
   const [productData, setProductData] = useState<ProductCard | null>(null)
+  const [qrPayload, setQrPayload] = useState<QRCodePayload | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Get the product data from session storage
+    // Get the product payload from session storage
     try {
-      const scannedProductBase64 = sessionStorage.getItem("scannedProduct")
+      const scannedProductPayload = sessionStorage.getItem("scannedProductPayload")
 
-      if (scannedProductBase64) {
-        const productJson = atob(scannedProductBase64)
-        const product = JSON.parse(productJson) as ProductCard
-        setProductData(product)
+      if (scannedProductPayload) {
+        const payload = JSON.parse(scannedProductPayload) as QRCodePayload
+        setQrPayload(payload)
+
+        // Fetch product data from the database using the product ID
+        fetchProductById(payload.id)
+          .then((product) => {
+            if (product) {
+              // Add nonce to product data
+              setProductData({
+                ...product,
+                nonce: payload.nonce,
+              })
+            } else {
+              setError("Product not found. Please scan a valid QR code.")
+            }
+          })
+          .catch((err) => {
+            console.error("Error fetching product:", err)
+            setError("Failed to load product data. Please try again.")
+          })
+          .finally(() => {
+            setIsLoading(false)
+          })
       } else {
         setError("No product data found. Please scan a QR code first.")
+        setIsLoading(false)
       }
     } catch (err) {
-      console.error("Error parsing product data:", err)
+      console.error("Error parsing product payload:", err)
       setError("Invalid product data format")
+      setIsLoading(false)
     }
   }, [])
 
   const handleRegister = async () => {
-    if (!productData) {
+    if (!productData || !qrPayload) {
       setError("No product data to register")
       return
     }
@@ -42,14 +72,14 @@ export default function ProductRegistrationContent() {
     setError(null)
 
     try {
-      const result = await registerProduct(productData)
+      const result = await registerProductForUser(qrPayload.id, qrPayload.nonce)
 
       if (result.success) {
         // Store the registered product data for the success page
         sessionStorage.setItem("registeredProduct", JSON.stringify(productData))
 
         // Clear the scanned product data
-        sessionStorage.removeItem("scannedProduct")
+        sessionStorage.removeItem("scannedProductPayload")
 
         // Redirect to success page
         router.push("/product-register/success")
@@ -66,13 +96,13 @@ export default function ProductRegistrationContent() {
 
   const handleCancel = () => {
     // Clear the session storage
-    sessionStorage.removeItem("scannedProduct")
+    sessionStorage.removeItem("scannedProductPayload")
     router.back()
   }
 
-  if (!productData && !error) {
+  if (isLoading) {
     return (
-      <div className="flex flex-col min-h-screen bg-[#050810] text-white items-center justify-center">
+      <div className="flex flex-col h-[100dvh] bg-[#050810] text-white items-center justify-center">
         <LoadingAnimation size="lg" color="#4169e1" />
         <p className="mt-4">Loading product data...</p>
       </div>
@@ -80,9 +110,9 @@ export default function ProductRegistrationContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#050810] text-white">
+    <div className="flex flex-col h-[100dvh] bg-[#050810] text-white">
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center px-6 pt-12 pb-8">
+      <div className="flex-1 flex flex-col items-center px-6 pt-12 pb-8 overflow-y-auto">
         <h1 className="text-4xl font-bold mb-12">Registration</h1>
 
         {error && (
@@ -103,16 +133,21 @@ export default function ProductRegistrationContent() {
             {/* Product Information */}
             <div className="text-center mb-auto">
               <h2 className="text-2xl font-semibold mb-2">{productData.name}</h2>
-              <p className="text-gray-300 mb-2">
-                {productData.number} out of {productData.total}
-              </p>
+              {productData.brand && <p className="text-gray-300 mb-2">Brand: {productData.brand}</p>}
               <p className={`font-medium ${getRarityColor(productData.rarity)}`}>{productData.rarity} item</p>
+
+              {/* Display Nonce */}
+              <div className="mt-4 p-3 bg-[#121620] rounded-md">
+                <p className="text-gray-300">
+                  #{productData.nonce} out of {productData.total}
+                </p>
+              </div>
             </div>
           </>
         )}
 
         {/* Action Buttons */}
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-4 mt-6">
           <button
             onClick={handleRegister}
             disabled={isRegistering || !productData}
@@ -140,9 +175,6 @@ export default function ProductRegistrationContent() {
             Cancel
           </button>
         </div>
-
-        {/* Home Indicator */}
-        <div className="w-32 h-1 bg-white rounded-full mt-8"></div>
       </div>
     </div>
   )

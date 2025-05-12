@@ -1,28 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { generateProductQRData } from "@/utils/qr-generator"
-import type { ProductCard, RarityType } from "@/types/product"
+import { generateProductAuthQRData } from "@/utils/qr-generator"
 import QRCode from "qrcode.react"
 
 export default function QRGeneratorPage() {
-  const [productName, setProductName] = useState("Limited Edition Hoodie")
-  const [productImage, setProductImage] = useState("/images/hoodie.png")
-  const [productNumber, setProductNumber] = useState(42)
-  const [productTotal, setProductTotal] = useState(100)
-  const [productRarity, setProductRarity] = useState<RarityType>("Rare")
+  const [productId, setProductId] = useState("688f027d-2389-4f46-9464-43591768ecb1")
+  const [nonce, setNonce] = useState(1)
   const [qrValue, setQrValue] = useState("")
 
   const handleGenerateQR = () => {
-    const product: ProductCard = {
-      name: productName,
-      image: productImage,
-      number: productNumber,
-      total: productTotal,
-      rarity: productRarity as RarityType,
-    }
-
-    const qrData = generateProductQRData(product)
+    const qrData = generateProductAuthQRData(productId, nonce)
     setQrValue(qrData)
   }
 
@@ -33,57 +21,23 @@ export default function QRGeneratorPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-4">
           <div>
-            <label className="block mb-2">Product Name</label>
+            <label className="block mb-2">Product ID (UUID)</label>
             <input
               type="text"
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
+              value={productId}
+              onChange={(e) => setProductId(e.target.value)}
               className="w-full bg-[#121620] border border-gray-700 rounded p-2"
             />
           </div>
 
           <div>
-            <label className="block mb-2">Image Path</label>
-            <input
-              type="text"
-              value={productImage}
-              onChange={(e) => setProductImage(e.target.value)}
-              className="w-full bg-[#121620] border border-gray-700 rounded p-2"
-            />
-          </div>
-
-          <div>
-            <label className="block mb-2">Number</label>
+            <label className="block mb-2">Nonce (Number)</label>
             <input
               type="number"
-              value={productNumber}
-              onChange={(e) => setProductNumber(Number.parseInt(e.target.value))}
+              value={nonce}
+              onChange={(e) => setNonce(Number.parseInt(e.target.value))}
               className="w-full bg-[#121620] border border-gray-700 rounded p-2"
             />
-          </div>
-
-          <div>
-            <label className="block mb-2">Total</label>
-            <input
-              type="number"
-              value={productTotal}
-              onChange={(e) => setProductTotal(Number.parseInt(e.target.value))}
-              className="w-full bg-[#121620] border border-gray-700 rounded p-2"
-            />
-          </div>
-
-          <div>
-            <label className="block mb-2">Rarity</label>
-            <select
-              value={productRarity}
-              onChange={(e) => setProductRarity(e.target.value as RarityType)}
-              className="w-full bg-[#121620] border border-gray-700 rounded p-2"
-            >
-              <option value="Common">Common</option>
-              <option value="Rare">Rare</option>
-              <option value="Epic">Epic</option>
-              <option value="Legendary">Legendary</option>
-            </select>
           </div>
 
           <button onClick={handleGenerateQR} className="w-full bg-[#4169e1] text-white py-3 rounded-md font-medium">
@@ -96,6 +50,9 @@ export default function QRGeneratorPage() {
             <>
               <QRCode value={qrValue} size={256} level="H" />
               <p className="mt-4 text-black text-sm">Scan this QR code with the app</p>
+              <p className="mt-2 text-black text-xs break-all">
+                <strong>Data:</strong> {qrValue}
+              </p>
             </>
           ) : (
             <p className="text-gray-500">Fill in the form and click Generate</p>

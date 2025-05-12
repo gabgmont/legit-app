@@ -1,5 +1,6 @@
 import type { ProductCard } from "@/types/product"
 
+// Legacy function for backward compatibility
 export function generateProductQRData(product: ProductCard): string {
   // Convert product to JSON
   const productJson = JSON.stringify(product)
@@ -8,15 +9,17 @@ export function generateProductQRData(product: ProductCard): string {
   return btoa(productJson)
 }
 
-// Example usage:
-// const sampleProduct = {
-//   name: "Limited Edition Hoodie",
-//   image: "/images/hoodie.png",
-//   number: 42,
-//   total: 100,
-//   rarity: "Rare"
-// }
-//
-// const qrData = generateProductQRData(sampleProduct)
-// console.log(qrData)
-// This base64 string can be used to generate a QR code using any QR code generator
+// New function for generating QR codes with the new payload format
+export function generateProductAuthQRData(productId: string, nonce: number): string {
+  // Create the payload
+  const payload = {
+    id: productId,
+    nonce: nonce,
+  }
+
+  // Convert payload to JSON
+  const payloadJson = JSON.stringify(payload)
+
+  // Convert JSON to base64
+  return btoa(payloadJson)
+}

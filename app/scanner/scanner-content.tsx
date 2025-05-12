@@ -3,8 +3,13 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { QRScanner } from "@/components/qr-scanner"
-import type { ProductCard } from "@/types/product"
 import { LoadingAnimation } from "@/components/loading-animation"
+
+// Define the QR code payload structure
+interface QRCodePayload {
+  id: string
+  nonce: number
+}
 
 export default function ScannerContent() {
   const router = useRouter()
@@ -18,15 +23,15 @@ export default function ScannerContent() {
     try {
       // Try to decode the base64 data
       const decodedJson = atob(data)
-      const productData = JSON.parse(decodedJson) as ProductCard
+      const payload = JSON.parse(decodedJson) as QRCodePayload
 
-      // Validate the product data
-      if (!productData.name || !productData.image || !productData.rarity) {
-        throw new Error("Invalid product data format")
+      // Validate the payload data
+      if (!payload.id || typeof payload.nonce !== "number") {
+        throw new Error("Invalid QR code payload format")
       }
 
-      // Store the product data in session storage
-      sessionStorage.setItem("scannedProduct", data)
+      // Store the payload data in session storage
+      sessionStorage.setItem("scannedProductPayload", JSON.stringify(payload))
 
       // Set scan as complete
       setScanComplete(true)
@@ -52,9 +57,9 @@ export default function ScannerContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#050810] text-white">
+    <div className="flex flex-col h-[100dvh] bg-[#050810] text-white">
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center px-6 pt-12 pb-8">
+      <div className="flex-1 flex flex-col items-center px-6 pt-12 pb-8 overflow-y-auto">
         <h1 className="text-4xl font-bold mb-12">Scan QR code</h1>
 
         {/* QR Scanner */}
@@ -98,9 +103,6 @@ export default function ScannerContent() {
         <button onClick={handleCancel} className="w-full border border-white rounded-md py-3 mt-auto mb-4">
           Cancel
         </button>
-
-        {/* Home Indicator */}
-        <div className="w-32 h-1 bg-white rounded-full mt-4"></div>
       </div>
     </div>
   )

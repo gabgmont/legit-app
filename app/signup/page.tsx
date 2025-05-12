@@ -4,8 +4,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { registerUser } from "../actions/auth"
-import { LoadingAnimation } from "@/components/loading-animation"
 import { Logo } from "@/components/logo"
+import { WatchLoadingAnimation } from "@/components/watch-loading-animation"
 
 export default function CreateAccountScreen() {
   const router = useRouter()
@@ -37,7 +37,7 @@ export default function CreateAccountScreen() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#050810] text-white">
+    <div className="flex flex-col h-[100dvh] bg-[#050810] text-white">
       {/* Logo and App Name */}
       <div className="flex items-center justify-center mt-8 mb-4">
         <Logo size="sm" />
@@ -45,7 +45,7 @@ export default function CreateAccountScreen() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col px-8 pt-4 pb-8">
+      <div className="flex-1 flex flex-col px-8 pt-4 pb-8 overflow-y-auto">
         <h1 className="text-4xl font-bold mb-10 text-center">
           Create
           <br />
@@ -61,8 +61,7 @@ export default function CreateAccountScreen() {
         {isSubmitting && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-[#121620] p-8 rounded-xl flex flex-col items-center">
-              <LoadingAnimation size="lg" color="#4169e1" />
-              <p className="mt-4 text-white font-medium">Creating your account...</p>
+              <WatchLoadingAnimation size="lg" color="#4169e1" text="Creating your account" />
             </div>
           </div>
         )}
@@ -130,7 +129,7 @@ export default function CreateAccountScreen() {
             className="w-full bg-[#4169e1] text-white py-3 rounded-md font-medium mt-6 disabled:opacity-70 flex items-center justify-center"
           >
             {isSubmitting ? (
-              <>
+              <div className="flex items-center">
                 <span className="mr-2">Registering</span>
                 <span className="flex space-x-1">
                   <span className="animate-pulse">.</span>
@@ -141,7 +140,7 @@ export default function CreateAccountScreen() {
                     .
                   </span>
                 </span>
-              </>
+              </div>
             ) : (
               "Register"
             )}
@@ -155,8 +154,7 @@ export default function CreateAccountScreen() {
           </Link>
         </div>
 
-        {/* Home Indicator */}
-        <div className="w-32 h-1 bg-white rounded-full mx-auto mt-8"></div>
+        {/* Removed home indicator */}
       </div>
     </div>
   )

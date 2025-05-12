@@ -79,7 +79,7 @@ export default function CollectionContent({ user }: { user: User }) {
       return (
         product.name.toLowerCase().includes(searchLower) ||
         product.rarity.toLowerCase().includes(searchLower) ||
-        String(product.number).includes(searchLower) ||
+        String(product.nonce).includes(searchLower) ||
         String(product.total).includes(searchLower) ||
         (product.registeredOn && product.registeredOn.toLowerCase().includes(searchLower))
       )
@@ -106,67 +106,68 @@ export default function CollectionContent({ user }: { user: User }) {
   const userInitial = user.name.charAt(0).toUpperCase()
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#050810] text-white">
-      {/* Status Bar */}
+    <div className="flex flex-col h-[100dvh] bg-[#050810] text-white overflow-hidden">
+      {/* Fixed Header Section */}
+      <div className="flex-none">
+        {/* User Profile */}
+        <div className="flex justify-between items-center px-6 py-4">
+          <div className="flex items-center relative">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex items-center focus:outline-none">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 flex items-center justify-center mr-3">
+                <span className="text-white font-semibold">{userInitial}</span>
+              </div>
+              <span className="text-xl font-semibold">{user.name}</span>
+            </button>
 
-      {/* User Profile */}
-      <div className="flex justify-between items-center px-6 py-4">
-        <div className="flex items-center relative">
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex items-center focus:outline-none">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 flex items-center justify-center mr-3">
-              <span className="text-white font-semibold">{userInitial}</span>
-            </div>
-            <span className="text-xl font-semibold">{user.name}</span>
+            {/* Dropdown Menu */}
+            {isMenuOpen && (
+              <div className="absolute top-12 left-0 bg-[#121620] border border-gray-700 rounded-md shadow-lg z-10 w-40">
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center w-full px-4 py-2 text-left hover:bg-[#1a1f2c] transition-colors"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Sign out</span>
+                </button>
+              </div>
+            )}
+          </div>
+          <button onClick={handleAddItem} className="w-8 h-8 flex items-center justify-center">
+            <Plus className="h-6 w-6 text-white" />
           </button>
-
-          {/* Dropdown Menu */}
-          {isMenuOpen && (
-            <div className="absolute top-12 left-0 bg-[#121620] border border-gray-700 rounded-md shadow-lg z-10 w-40">
-              <button
-                onClick={handleSignOut}
-                className="flex items-center w-full px-4 py-2 text-left hover:bg-[#1a1f2c] transition-colors"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                <span>Sign out</span>
-              </button>
-            </div>
-          )}
         </div>
-        <button onClick={handleAddItem} className="w-8 h-8 flex items-center justify-center">
-          <Plus className="h-6 w-6 text-white" />
-        </button>
-      </div>
 
-      {/* Collection Title */}
-      <div className="px-6 py-4">
-        <h1 className="text-3xl font-bold">my collection</h1>
-      </div>
+        {/* Collection Title */}
+        <div className="px-6 py-4">
+          <h1 className="text-3xl font-bold">my collection</h1>
+        </div>
 
-      {/* Search Bar */}
-      <div className="px-6 mb-6">
-        <div className="relative">
-          <label className="text-sm font-medium mb-1 block">Search</label>
+        {/* Search Bar */}
+        <div className="px-6 mb-6">
           <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name, brand, number or rarity"
-              className="w-full bg-transparent border-b border-gray-700 pb-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 pl-0 pr-8"
-            />
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 h-5 w-5">
-              {isSearching ? (
-                <LoadingAnimation size="sm" color="#4169e1" />
-              ) : (
-                <Search className="h-5 w-5 text-gray-500" />
-              )}
+            <label className="text-sm font-medium mb-1 block">Search</label>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, brand, number or rarity"
+                className="w-full bg-transparent border-b border-gray-700 pb-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 pl-0 pr-8"
+              />
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 h-5 w-5">
+                {isSearching ? (
+                  <LoadingAnimation size="sm" color="#4169e1" />
+                ) : (
+                  <Search className="h-5 w-5 text-gray-500" />
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Product Grid */}
-      <div className="px-6 mb-auto">
+      {/* Scrollable Product Grid - Hide scrollbar when not needed */}
+      <div className="flex-grow px-6 pb-4 overflow-auto scrollbar-hide">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12">
             <LoadingAnimation size="lg" color="#4169e1" />
@@ -211,10 +212,15 @@ export default function CollectionContent({ user }: { user: User }) {
                     >
                       {product.name}
                     </h3>
-                    <p className="text-sm text-gray-400">
-                      {product.number} out of {product.total}
-                    </p>
                     <p className={`text-xs font-medium ${getRarityColor(product.rarity)}`}>{product.rarity} item</p>
+
+                    {/* Display Nonce */}
+                    <div className="mt-1 flex justify-between items-center">
+                      <p className="text-xs text-gray-400">
+                        #{product.nonce} out of {product.total}
+                      </p>
+                      <p className="text-xs text-gray-400">{product.registeredOn}</p>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -222,9 +228,6 @@ export default function CollectionContent({ user }: { user: User }) {
           </div>
         )}
       </div>
-
-      {/* Home Indicator */}
-      <div className="w-32 h-1 bg-white rounded-full mx-auto my-8"></div>
     </div>
   )
 }
