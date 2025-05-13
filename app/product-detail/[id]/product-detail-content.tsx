@@ -105,7 +105,7 @@ export default function ProductDetailContent({ user, product }: { user: User; pr
         {/* Nonce Input */}
         <div className="w-full max-w-md mb-6">
           <label htmlFor="nonce" className="block text-lg mb-2">
-            nounce
+            nonce
           </label>
           <input
             id="nonce"
@@ -115,7 +115,7 @@ export default function ProductDetailContent({ user, product }: { user: User; pr
             onChange={(e) => setNonce(Number.parseInt(e.target.value) || 1)}
             className="w-full bg-transparent border-b border-gray-700 pb-2 text-white focus:outline-none focus:border-blue-500"
           />
-          <p className="text-xs text-gray-500 mt-1">Product nounce</p>
+          <p className="text-xs text-gray-500 mt-1">Product nonce</p>
         </div>
 
         {/* Download Button */}

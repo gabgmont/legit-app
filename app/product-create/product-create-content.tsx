@@ -4,12 +4,12 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Upload } from "lucide-react"
+import { Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { createProduct } from "./actions"
 import type { RarityType } from "@/types/product"
-import { WatchLoadingAnimation } from "@/components/watch-loading-animation"
+import { LoadingDots } from "@/components/loading-animation"
 
 interface User {
   id: string
@@ -103,7 +103,7 @@ export default function ProductCreateContent({ user }: { user: User }) {
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-[#050810] text-white">
-            {/* Header */}
+      {/* Header */}
       <header className="flex items-center justify-start px-6 py-4 border-b border-gray-800">
         <div className="flex items-center mr-4">
           <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 flex items-center justify-center mr-3">
@@ -127,14 +127,6 @@ export default function ProductCreateContent({ user }: { user: User }) {
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded-md mb-6 w-full">
             {error}
-          </div>
-        )}
-
-        {isSubmitting && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-[#121620] p-8 rounded-xl flex flex-col items-center">
-              <WatchLoadingAnimation size="lg" color="#4169e1" text="Creating product" />
-            </div>
           </div>
         )}
 
@@ -235,7 +227,13 @@ export default function ProductCreateContent({ user }: { user: User }) {
               disabled={isSubmitting}
               className="w-full bg-[#4169e1] text-white py-3 rounded-md font-medium mt-6 disabled:opacity-70"
             >
-              Create
+              {isSubmitting ? (
+                <span className="flex items-center justify-center">
+                  Creating <LoadingDots className="ml-2" color="white" />
+                </span>
+              ) : (
+                "Create"
+              )}
             </button>
           </div>
         </form>
