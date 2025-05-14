@@ -7,8 +7,7 @@ import { useRouter } from "next/navigation"
 import { Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { createProduct } from "./actions"
-import type { RarityType } from "@/types/product"
+import { createProduct } from "../actions/product"
 import { LoadingDots } from "@/components/loading-animation"
 
 interface User {
@@ -19,11 +18,6 @@ interface User {
 
 export default function ProductCreateContent({ user }: { user: User }) {
   const router = useRouter()
-  const [name, setName] = useState("")
-  const [brand, setBrand] = useState("")
-  const [quantity, setQuantity] = useState("")
-  const [rarity, setRarity] = useState<RarityType>("Common")
-  const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,22 +26,18 @@ export default function ProductCreateContent({ user }: { user: User }) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError("Image size should be less than 5MB")
       return
     }
 
-    // Check file type
     if (!file.type.startsWith("image/")) {
       setError("Please upload an image file")
       return
     }
 
-    setImageFile(file)
     setError(null)
 
-    // Create preview
     const reader = new FileReader()
     reader.onloadend = () => {
       setImagePreview(reader.result as string)
@@ -55,37 +45,25 @@ export default function ProductCreateContent({ user }: { user: User }) {
     reader.readAsDataURL(file)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
     setError(null)
 
+    const formData = new FormData(e.currentTarget)
+
     try {
-      // Validate form
-      if (!name || !brand || !quantity || !rarity) {
+      if (!formData.get("name") || !formData.get("brand") || !formData.get("quantity") || !formData.get("rarity")) {
         throw new Error("Please fill in all fields")
       }
 
-      if (!imageFile && !imagePreview) {
+      if (!formData.get("image") && !imagePreview) {
         throw new Error("Please upload a product image")
       }
 
-      // Create FormData for file upload
-      const formData = new FormData()
-      formData.append("name", name)
-      formData.append("brand", brand)
-      formData.append("quantity", quantity)
-      formData.append("rarity", rarity)
-
-      if (imageFile) {
-        formData.append("image", imageFile)
-      }
-
-      // Submit the form
       const result = await createProduct(formData)
 
       if (result.success) {
-        // Redirect to product-list page instead of collection
         router.push("/product-list")
       } else {
         setError(result.message)
@@ -97,9 +75,6 @@ export default function ProductCreateContent({ user }: { user: User }) {
       setIsSubmitting(false)
     }
   }
-
-  // Get first letter of user's name for avatar
-  const userInitial = user.name.charAt(0).toUpperCase()
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-[#050810] text-white">
@@ -149,7 +124,7 @@ export default function ProductCreateContent({ user }: { user: User }) {
               ) : (
                 <Upload className="h-12 w-12 text-gray-400" />
               )}
-              <input type="file" id="product-image" accept="image/*" className="hidden" onChange={handleImageChange} />
+              <input type="file" name="image" id="product-image" accept="image/*" className="hidden" onChange={handleImageChange} />
             </label>
           </div>
 
@@ -161,9 +136,8 @@ export default function ProductCreateContent({ user }: { user: User }) {
               </label>
               <input
                 id="name"
+                name="name"
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
                 placeholder="Product name"
                 className="w-full bg-transparent border-b border-gray-700 pb-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               />
@@ -175,9 +149,8 @@ export default function ProductCreateContent({ user }: { user: User }) {
               </label>
               <input
                 id="brand"
+                name="brand"
                 type="text"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
                 placeholder="Product brand"
                 className="w-full bg-transparent border-b border-gray-700 pb-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               />
@@ -189,9 +162,8 @@ export default function ProductCreateContent({ user }: { user: User }) {
               </label>
               <input
                 id="quantity"
+                name="quantity"
                 type="text"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
                 placeholder="Product quantity"
                 className="w-full bg-transparent border-b border-gray-700 pb-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               />
@@ -203,8 +175,7 @@ export default function ProductCreateContent({ user }: { user: User }) {
               </label>
               <select
                 id="rarity"
-                value={rarity}
-                onChange={(e) => setRarity(e.target.value as RarityType)}
+                name="rarity"
                 className="w-full bg-transparent border-b border-gray-700 pb-2 text-white focus:outline-none focus:border-blue-500 appearance-none"
               >
                 <option value="Common" className="bg-[#121620]">

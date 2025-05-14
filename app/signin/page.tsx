@@ -1,22 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { signIn } from "../actions/auth"
 import { Logo } from "@/components/logo"
 import { WatchLoadingAnimation } from "@/components/watch-loading-animation"
+import { LoadingDots } from "@/components/loading-animation"
 
 export default function SignInScreen() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  async function handleSubmit(formData: FormData) {
-    setIsLoading(true)
-    setError(null)
-
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
+      e.preventDefault()
+      setIsLoading(true)
+      setError(null)
+      
+      const formData = new FormData(e.currentTarget)
       const result = await signIn(formData)
 
       if (result.success) {
@@ -55,15 +58,10 @@ export default function SignInScreen() {
           <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded-md mb-6">{error}</div>
         )}
 
-        {isLoading && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-[#121620] p-8 rounded-xl flex flex-col items-center">
-              <WatchLoadingAnimation size="lg" color="#4169e1" text="Verifying credentials" />
-            </div>
-          </div>
-        )}
-
-        <form action={handleSubmit} className="space-y-6">
+        <form 
+          onSubmit={handleSubmit} 
+          className="space-y-6"
+        >
           <div className="space-y-1">
             <label htmlFor="email" className="block text-sm font-medium">
               Email
@@ -93,30 +91,19 @@ export default function SignInScreen() {
           </div>
 
           <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-[#4169e1] text-white py-3 rounded-md font-medium mt-6 disabled:opacity-70 flex items-center justify-center"
-          >
-            {isLoading ? (
-              <div className="flex items-center">
-                <span className="mr-2">Signing in</span>
-                <span className="flex space-x-1">
-                  <span className="animate-pulse">.</span>
-                  <span className="animate-pulse" style={{ animationDelay: "0.2s" }}>
-                    .
-                  </span>
-                  <span className="animate-pulse" style={{ animationDelay: "0.4s" }}>
-                    .
-                  </span>
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-[#4169e1] text-white py-3 rounded-md font-medium mt-6 disabled:opacity-70"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center">
+                  Authenticationg <LoadingDots className="ml-2" color="white" />
                 </span>
-              </div>
-            ) : (
-              "Enter"
-            )}
-          </button>
+              ) : (
+                "Enter"
+              )}
+            </button>
         </form>
-
-        {/* Removed home indicator */}
       </div>
     </div>
   )

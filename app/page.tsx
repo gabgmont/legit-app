@@ -32,8 +32,6 @@ export default function LandingPage() {
         >
           Get started
         </Link>
-
-        {/* Removed home indicator */}
       </div>
     </div>
   )

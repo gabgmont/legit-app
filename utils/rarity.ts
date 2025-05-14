@@ -7,7 +7,7 @@ export const getRarityColor = (rarity: RarityType): string => {
     case "Rare":
       return "text-blue-400" // Blue for rare items
     case "Epic":
-      return "text-purple-500" // Purple for epic items
+      return "text-purple-400" // Purple for epic items
     case "Legendary":
       return "text-orange-400" // Orange/gold for legendary items
     default:
@@ -22,7 +22,7 @@ export const getRarityBgColor = (rarity: RarityType): string => {
     case "Rare":
       return "bg-blue-400/10" // Blue background with low opacity
     case "Epic":
-      return "bg-purple-500/10" // Purple background with low opacity
+      return "bg-purple-400/10" // Purple background with low opacity
     case "Legendary":
       return "bg-orange-400/10" // Orange/gold background with low opacity
     default:

@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Share2 } from "lucide-react"
-import { getAllProducts } from "./actions"
+import { getAllProducts } from "../actions/product"
 import type { ProductCard } from "@/types/product"
 import { ProductImage } from "@/components/product-image"
 import { LoadingAnimation } from "@/components/loading-animation"
@@ -202,7 +201,7 @@ export default function ProductListContent({ user }: { user: User }) {
                   <div className="p-4">
                     <h3 className="text-xl font-semibold mb-1">{product.name}</h3>
                     <p className="text-sm text-gray-300 mb-2">
-                      {product.nonce} out of {product.total}
+                      {product.total} available
                     </p>
                     <p className={`text-sm ${getRarityColor(product.rarity)}`}>{product.rarity} item</p>
                   </div>
