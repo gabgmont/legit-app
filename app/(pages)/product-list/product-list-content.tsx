@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { getAllProducts } from "../actions/product"
+import { getAllProducts } from "../../actions/product"
 import type { ProductCard } from "@/types/product"
 import { ProductImage } from "@/components/product-image"
 import { LoadingAnimation } from "@/components/loading-animation"

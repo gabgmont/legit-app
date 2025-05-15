@@ -1,4 +1,4 @@
-import { requireAuth } from "../actions/auth"
+import { requireAuth } from "../../actions/auth"
 import VerifyContent from "./verify-content"
 
 export default async function VerifyPage() {

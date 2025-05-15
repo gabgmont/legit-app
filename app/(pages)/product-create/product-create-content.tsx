@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { createProduct } from "../actions/product"
+import { createProduct } from "../../actions/product"
 import { LoadingDots } from "@/components/loading-animation"
 
 interface User {

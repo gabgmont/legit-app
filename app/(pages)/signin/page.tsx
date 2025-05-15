@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { signIn } from "../actions/auth"
+import { signIn } from "../../actions/auth"
 import { Logo } from "@/components/logo"
 import { WatchLoadingAnimation } from "@/components/watch-loading-animation"
 import { LoadingDots } from "@/components/loading-animation"

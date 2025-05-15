@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { registerUser } from "../actions/auth"
+import { registerUser } from "../../actions/auth"
 import { Logo } from "@/components/logo"
 import { WatchLoadingAnimation } from "@/components/watch-loading-animation"
 

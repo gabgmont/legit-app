@@ -13,7 +13,6 @@ export type ProductResult = {
 
 export async function createProduct(formData: FormData): Promise<ProductResult> {
   try {
-    // We still check if user is authenticated even though we don't store user_id
     const user = await getCurrentUser()
 
     if (!user) {
@@ -29,7 +28,6 @@ export async function createProduct(formData: FormData): Promise<ProductResult> 
     const rarity = formData.get("rarity") as RarityType
     const imageFile = formData.get("image") as File
 
-    // Validate inputs
     if (!name || !brand || !quantity || !rarity) {
       return {
         success: false,
@@ -37,15 +35,12 @@ export async function createProduct(formData: FormData): Promise<ProductResult> 
       }
     }
 
-    // Parse quantity to get total
     let total = 1
 
-    // Try to parse formats like "1/100" or "1 of 100"
     const quantityMatch = quantity.match(/(\d+)(?:\s*[/of]\s*)(\d+)/i)
     if (quantityMatch) {
       total = Number.parseInt(quantityMatch[2], 10)
     } else {
-      // If it's just a number, use it as the total
       const parsedTotal = Number.parseInt(quantity, 10)
       if (!isNaN(parsedTotal)) {
         total = parsedTotal
@@ -54,45 +49,13 @@ export async function createProduct(formData: FormData): Promise<ProductResult> 
 
     const supabase = createServerSupabaseClient()
 
-    // Handle image upload if provided
-    let imagePath = ""
-    if (imageFile && imageFile.size > 0) {
-      // Convert File to Buffer for Supabase storage
-      const arrayBuffer = await imageFile.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
-
-      // Upload to Supabase Storage
-      const fileName = `product_${user.id}_${Date.now()}.${imageFile.name.split(".").pop()}`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("products")
-        .upload(fileName, buffer, {
-          contentType: imageFile.type,
-        })
-
-      if (uploadError) {
-        console.error("Error uploading image:", uploadError)
-        return {
-          success: false,
-          message: "Failed to upload product image",
-        }
-      }
-
-      // Get public URL for the uploaded image
-      const { data: urlData } = supabase.storage.from("products").getPublicUrl(fileName)
-
-      imagePath = urlData.publicUrl
-    }
-
-    // Insert the product into the database with only the remaining fields
     const { data, error } = await supabase
       .from("products")
       .insert({
         name: name,
         brand: brand,
-        image: imagePath,
         total: total,
         rarity: rarity,
-        // registered_on is automatically set by the database
       })
       .select("id")
       .single()
@@ -102,6 +65,64 @@ export async function createProduct(formData: FormData): Promise<ProductResult> 
       return {
         success: false,
         message: "Failed to create product. Please try again.",
+      }
+    }
+    let imageUrl = ""
+    if (imageFile && imageFile.size > 0) {
+      const arrayBuffer = await imageFile.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+
+      const fileName = `${data.id}.${imageFile.name.split(".").pop()}`
+      const { error: uploadError } = await supabase.storage
+        .from("products")
+        .upload(fileName, buffer, {
+          contentType: imageFile.type,
+        })
+      
+      const { data: urlData } = supabase.storage.from("products").getPublicUrl(fileName)
+      imageUrl = urlData.publicUrl
+
+      if (uploadError) {
+        console.error("Error uploading image:", uploadError)
+        return {
+          success: false,
+          message: "Failed to upload product image",
+        }
+      }
+    }
+   
+    const { error: imageError } = await supabase
+    .from("products")
+    .update({ image: imageUrl })
+    .eq("id", data.id)
+    
+    if (imageError) {
+      console.error("Error creating product:", imageError)
+      return {
+        success: false,
+        message: "Failed to create product. Please try again.",
+      }
+    }
+
+    const jsonData = {
+      name: name,
+      description: `${brand} - ${rarity}`,
+      image: imageUrl
+    }
+
+    const jsonBuffer = Buffer.from(JSON.stringify(jsonData, null, 2))
+
+    const { error: jsonUploadError } = await supabase.storage
+      .from("products-onchain")
+      .upload(`${data.id}.json`, jsonBuffer, {
+        contentType: "application/json",
+      })
+
+    if (jsonUploadError) {
+      console.error("Error uploading JSON:", jsonUploadError)
+      return {
+        success: false,
+        message: "Failed to upload product metadata",
       }
     }
 

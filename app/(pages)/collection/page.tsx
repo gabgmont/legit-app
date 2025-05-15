@@ -1,4 +1,4 @@
-import { requireAuth } from "../actions/auth"
+import { requireAuth } from "../../actions/auth"
 import CollectionContent from "./collection-content"
 
 export default async function CollectionPage() {

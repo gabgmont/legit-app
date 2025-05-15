@@ -1,4 +1,4 @@
-import { requireAuth } from "../actions/auth"
+import { requireAuth } from "../../actions/auth"
 import ProductListContent from "./product-list-content"
 
 export default async function ProductListPage() {
