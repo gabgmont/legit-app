@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { ProductCard } from "@/types/product"
-import { fetchProductById, registerProductForUser } from "../../actions/product"
+import { fetchProductById, registerProductForUser, updateProduct } from "../../actions/product"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { ProductImage } from "@/components/product-image"
 import { getRarityColor } from "@/utils/rarity"
+import { mint } from "@/lib/blockchain/contracts/legit-contract"
+import { walletClient } from "@/lib/blockchain/client"
 
-// Define the QR code payload structure
 interface QRCodePayload {
   id: string
   nonce: number
@@ -23,7 +24,6 @@ export default function ProductRegistrationContent() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Get the product payload from session storage
     try {
       const scannedProductPayload = sessionStorage.getItem("scannedProductPayload")
 
@@ -31,11 +31,9 @@ export default function ProductRegistrationContent() {
         const payload = JSON.parse(scannedProductPayload) as QRCodePayload
         setQrPayload(payload)
 
-        // Fetch product data from the database using the product ID
         fetchProductById(payload.id)
           .then((product) => {
             if (product) {
-              // Add nonce to product data
               setProductData({
                 ...product,
                 nonce: payload.nonce,
@@ -72,17 +70,17 @@ export default function ProductRegistrationContent() {
     setError(null)
 
     try {
-      const result = await registerProductForUser(qrPayload.id, qrPayload.nonce)
+      const txHash = await mint(walletClient, qrPayload.id, qrPayload.nonce)
+      const result = await registerProductForUser(qrPayload.id, qrPayload.nonce, txHash)
 
       if (result.success) {
-        // Store the registered product data for the success page
+        const txHash = await mint(walletClient, qrPayload.id, qrPayload.nonce)
+        const updateResult = await updateProduct(qrPayload.id, txHash)
+
         sessionStorage.setItem("registeredProduct", JSON.stringify(productData))
-
-        // Clear the scanned product data
         sessionStorage.removeItem("scannedProductPayload")
-
-        // Redirect to success page
         router.push("/product-register/success")
+
       } else {
         setError(result.message)
       }
@@ -95,7 +93,6 @@ export default function ProductRegistrationContent() {
   }
 
   const handleCancel = () => {
-    // Clear the session storage
     sessionStorage.removeItem("scannedProductPayload")
     router.back()
   }

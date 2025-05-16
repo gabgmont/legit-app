@@ -7,9 +7,10 @@ import { useRouter } from "next/navigation"
 import { Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { createProduct } from "../../actions/product"
+import { createProduct, updateProduct, deleteProduct } from "../../actions/product"
 import { LoadingDots } from "@/components/loading-animation"
-
+import { walletClient } from "@/lib/blockchain/client"
+import { registerAsset } from "@/lib/blockchain/contracts/legit-contract"
 interface User {
   id: string
   name: string
@@ -62,6 +63,15 @@ export default function ProductCreateContent({ user }: { user: User }) {
       }
 
       const result = await createProduct(formData)
+      if (result.productId && result.totalSupply) {
+        const txHash = await registerAsset(walletClient, result.productId, result.totalSupply);
+        const updateResult = await updateProduct(result.productId, txHash)
+        
+        if (!updateResult.success) {
+          await deleteProduct(result.productId)
+          setError("Failed to register product on the blockchain")
+        }
+      }
 
       if (result.success) {
         router.push("/product-list")

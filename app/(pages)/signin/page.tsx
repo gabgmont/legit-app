@@ -1,11 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { signIn } from "../../actions/auth"
 import { Logo } from "@/components/logo"
-import { WatchLoadingAnimation } from "@/components/watch-loading-animation"
 import { LoadingDots } from "@/components/loading-animation"
 
 export default function SignInScreen() {
@@ -97,7 +96,7 @@ export default function SignInScreen() {
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
-                  Authenticationg <LoadingDots className="ml-2" color="white" />
+                  Authenticating <LoadingDots className="ml-2" color="white" />
                 </span>
               ) : (
                 "Enter"

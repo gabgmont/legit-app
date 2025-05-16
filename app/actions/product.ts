@@ -9,6 +9,7 @@ export type ProductResult = {
   success: boolean
   message: string
   productId?: string
+  totalSupply?: number
 }
 
 export async function createProduct(formData: FormData): Promise<ProductResult> {
@@ -49,6 +50,7 @@ export async function createProduct(formData: FormData): Promise<ProductResult> 
 
     const supabase = createServerSupabaseClient()
 
+    // Register product in the database
     const { data, error } = await supabase
       .from("products")
       .insert({
@@ -67,6 +69,8 @@ export async function createProduct(formData: FormData): Promise<ProductResult> 
         message: "Failed to create product. Please try again.",
       }
     }
+
+    // Upload image to the database
     let imageUrl = ""
     if (imageFile && imageFile.size > 0) {
       const arrayBuffer = await imageFile.arrayBuffer()
@@ -90,7 +94,8 @@ export async function createProduct(formData: FormData): Promise<ProductResult> 
         }
       }
     }
-   
+
+    // Update the product with the image URL and contract address
     const { error: imageError } = await supabase
     .from("products")
     .update({ image: imageUrl })
@@ -130,6 +135,7 @@ export async function createProduct(formData: FormData): Promise<ProductResult> 
       success: true,
       message: "Product created successfully!",
       productId: data.id,
+      totalSupply: total,
     }
   } catch (error) {
     console.error("Error in createProduct:", error)
@@ -138,6 +144,32 @@ export async function createProduct(formData: FormData): Promise<ProductResult> 
       message: "An unexpected error occurred. Please try again.",
     }
   }
+}
+
+export async function updateProduct(productId: string, txHash: string): Promise<ProductResult> {
+  const supabase = createServerSupabaseClient()
+
+  const { error } = await supabase.from("products").update({ tx_hash: txHash }).eq("id", productId)
+
+  if (error) {
+    console.error("Error updating product:", error)
+    return { success: false, message: "Failed to update product" }
+  }
+
+  return { success: true, message: "Product updated successfully" }
+}
+
+export async function deleteProduct(productId: string): Promise<ProductResult> {
+  const supabase = createServerSupabaseClient()
+
+  const { error } = await supabase.from("products").delete().eq("id", productId)
+
+  if (error) {
+    console.error("Error deleting product:", error)
+    return { success: false, message: "Failed to delete product" }
+  }
+
+  return { success: true, message: "Product deleted successfully" }
 }
 
 export async function fetchProductById(id: string): Promise<ProductCard | null> {
@@ -172,7 +204,7 @@ export async function fetchProductById(id: string): Promise<ProductCard | null> 
   }
 }
 
-export async function registerProductForUser(productId: string, nonce: number): Promise<ProductResult> {
+export async function registerProductForUser(productId: string, nonce: number, txHash: string): Promise<ProductResult> {
   try {
     const user = await getCurrentUser()
 
@@ -208,6 +240,7 @@ export async function registerProductForUser(productId: string, nonce: number): 
         user_id: user.id,
         nonce: nonce,
         registered_on: new Date().toISOString(),
+        tx_hash: txHash,
       })
       .select("id")
       .single()

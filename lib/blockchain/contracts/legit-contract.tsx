@@ -1,10 +1,11 @@
 import { Address, getContract, WalletClient } from "viem";
+import { walletClient } from "../client";
 import { legitContract } from "@/app/abi/legit-contract-abi";
 import { provider } from "../server";
 import { ethers } from "ethers";
 
 async function contractClient(wallet: WalletClient) {
-  const [account] = await wallet.requestAddresses();
+  const [signer] = await walletClient.requestAddresses();
 
   return [
     getContract({
@@ -13,10 +14,10 @@ async function contractClient(wallet: WalletClient) {
       client: {
         public: provider,
         wallet,
-        account,
+        signer,
       },
     }),
-    account,
+    signer,
   ];
 }
 
@@ -34,6 +35,8 @@ export async function registerAsset(
 
   const receipt = await provider.waitForTransactionReceipt({ hash: tx });
   console.log("Transaction confirmed:", receipt);
+
+  return receipt.transactionHash;
 }
 
 export async function mint(
@@ -50,6 +53,8 @@ export async function mint(
 
   const receipt = await provider.waitForTransactionReceipt({ hash: tx });
   console.log("Transaction confirmed:", receipt);
+
+  return receipt.transactionHash;
 }
 
 export async function getAssetTotalSupply(
@@ -61,6 +66,8 @@ export async function getAssetTotalSupply(
 
   const totalSupply = await contract.read.getAssetTotalSupply([ethers.hexlify(bytes)], {account});
   console.log("Asset total supply:", totalSupply);
+
+  return totalSupply;
 }
 
 export async function getOwnerOf(
@@ -73,4 +80,6 @@ export async function getOwnerOf(
 
   const owner = await contract.read.getOwnerOf([ethers.hexlify(bytes), tokenId], {account});
   console.log("Owner of token:", owner);
+
+  return owner;
 }
