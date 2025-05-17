@@ -61,23 +61,35 @@ export default function ProductCreateContent({ user }: { user: User }) {
       if (!formData.get("image") && !imagePreview) {
         throw new Error("Please upload a product image")
       }
+      
+      let success = false;
 
       const result = await createProduct(formData)
       if (result.productId && result.totalSupply) {
-        const txHash = await registerAsset(walletClient, result.productId, result.totalSupply);
-        const updateResult = await updateProduct(result.productId, txHash)
+        success = true;
+        const receipt = await registerAsset(walletClient, result.productId, result.totalSupply);
         
-        if (!updateResult.success) {
+        if (receipt.status == "success") {
+          const updateResult = await updateProduct(result.productId, receipt.transactionHash)
+          if (!updateResult.success) {
+            success = false;
+            await deleteProduct(result.productId)
+            setError("Failed to update product on the database")
+          }
+
+        } else {
+          success = false;
           await deleteProduct(result.productId)
           setError("Failed to register product on the blockchain")
         }
       }
 
-      if (result.success) {
+      if (success) {
         router.push("/product-list")
       } else {
         setError(result.message)
       }
+      
     } catch (err) {
       console.error("Error creating product:", err)
       setError((err as Error).message || "Failed to create product")

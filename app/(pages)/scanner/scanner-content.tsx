@@ -19,7 +19,7 @@ export default function ScannerContent() {
 
   const handleScan = (data: string) => {
     setIsProcessing(true)
-
+    console.log("data", data)
     try {
       // Try to decode the base64 data
       const decodedJson = atob(data)

@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { signOut } from "../../actions/auth"
 import { getUserProducts } from "../../actions/product"
-import type { ProductCard } from "@/types/product"
+import type { ProductCard, ProductRegistrationCard } from "@/types/product"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { ProductImage } from "@/components/product-image"
 import { getRarityColor } from "@/utils/rarity"
@@ -38,7 +38,7 @@ export default function CollectionContent({ user }: { user: User }) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [products, setProducts] = useState<ProductCard[]>([])
+  const [products, setProducts] = useState<ProductRegistrationCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isSearching, setIsSearching] = useState(false)
@@ -68,20 +68,18 @@ export default function CollectionContent({ user }: { user: User }) {
     }
   }, [debouncedSearchQuery, searchQuery])
 
-  // Replace the existing filteredProducts definition with this enhanced version
   const filteredProducts = useMemo(() => {
     if (!debouncedSearchQuery.trim()) return products
 
     const searchLower = debouncedSearchQuery.toLowerCase().trim()
 
-    return products.filter((product) => {
-      // Search in multiple fields
+    return products.filter((productRegistration) => {
       return (
-        product.name.toLowerCase().includes(searchLower) ||
-        product.rarity.toLowerCase().includes(searchLower) ||
-        String(product.nonce).includes(searchLower) ||
-        String(product.total).includes(searchLower) ||
-        (product.registeredOn && product.registeredOn.toLowerCase().includes(searchLower))
+        productRegistration.product.name.toLowerCase().includes(searchLower) ||
+        productRegistration.product.rarity.toLowerCase().includes(searchLower) ||
+        String(productRegistration.nonce).includes(searchLower) ||
+        String(productRegistration.product.total).includes(searchLower) ||
+        (productRegistration.registeredOn && productRegistration.registeredOn.toLowerCase().includes(searchLower))
       )
     })
   }, [products, debouncedSearchQuery])
@@ -197,29 +195,29 @@ export default function CollectionContent({ user }: { user: User }) {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
-            {filteredProducts.map((product) => (
-              <Link href={`/product/${product.id}`} key={product.id}>
+            {filteredProducts.map((productRegistration) => (
+              <Link href={`/product/${productRegistration.id}?nonce=${productRegistration.nonce}`} key={`${productRegistration.id}-${productRegistration.nonce}`}>
                 <div className="border border-[#3859d4] rounded-lg overflow-hidden">
                   <div className="bg-[#0a0e1a] p-4 flex items-center justify-center">
                     <div className="relative w-full h-32">
-                      <ProductImage src={product.image} alt={product.name} fill />
+                      <ProductImage src={productRegistration.product.image} alt={productRegistration.product.name} fill />
                     </div>
                   </div>
                   <div className="p-3">
                     <h3
                       className="text-lg font-semibold truncate overflow-hidden whitespace-nowrap"
-                      title={product.name}
+                      title={productRegistration.product.name}
                     >
-                      {product.name}
+                      {productRegistration.product.name}
                     </h3>
-                    <p className={`text-xs font-medium ${getRarityColor(product.rarity)}`}>{product.rarity} item</p>
+                    <p className={`text-xs font-medium ${getRarityColor(productRegistration.product.rarity)}`}>{productRegistration.product.rarity} item</p>
 
                     {/* Display Nonce */}
                     <div className="mt-1 flex justify-between items-center">
                       <p className="text-xs text-gray-400">
-                        #{product.nonce} out of {product.total}
+                        #{productRegistration.nonce} out of {productRegistration.product.total}
                       </p>
-                      <p className="text-xs text-gray-400">{product.registeredOn}</p>
+                      <p className="text-xs text-gray-400">{productRegistration.registeredOn}</p>
                     </div>
                   </div>
                 </div>

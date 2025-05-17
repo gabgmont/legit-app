@@ -1,4 +1,4 @@
-import { Address, getContract, WalletClient } from "viem";
+import { Address, getContract, TransactionReceipt, WalletClient } from "viem";
 import { walletClient } from "../client";
 import { legitContract } from "@/app/abi/legit-contract-abi";
 import { provider } from "../server";
@@ -25,7 +25,7 @@ export async function registerAsset(
   wallet: WalletClient,
   assetKey: string,
   totalSupply: number
-) {
+): Promise<TransactionReceipt> {
   const bytes = ethers.toUtf8Bytes(assetKey);
   const [contract, account] = await contractClient(wallet);
 
@@ -36,14 +36,14 @@ export async function registerAsset(
   const receipt = await provider.waitForTransactionReceipt({ hash: tx });
   console.log("Transaction confirmed:", receipt);
 
-  return receipt.transactionHash;
+  return receipt;
 }
 
 export async function mint(
   wallet: WalletClient,
   assetKey: string,
   tokenId: number
-) {
+): Promise<TransactionReceipt> {
   const bytes = ethers.toUtf8Bytes(assetKey);
   const [contract, account] = await contractClient(wallet);
 
@@ -54,7 +54,7 @@ export async function mint(
   const receipt = await provider.waitForTransactionReceipt({ hash: tx });
   console.log("Transaction confirmed:", receipt);
 
-  return receipt.transactionHash;
+  return receipt;
 }
 
 export async function getAssetTotalSupply(

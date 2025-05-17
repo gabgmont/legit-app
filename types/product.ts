@@ -8,5 +8,13 @@ export interface ProductCard {
   total: number
   rarity: RarityType
   registeredOn?: string
-  nonce?: number // Add nonce field
+  nonce?: number
+}
+
+export interface ProductRegistrationCard {
+  id: string
+  nonce: number
+  registeredOn: string
+  txHash: string
+  product: ProductCard
 }

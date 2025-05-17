@@ -153,6 +153,7 @@ export default function ProductDetailContent({
         <div className="border border-[#3859d4] rounded-md p-4 mb-8 flex justify-center w-full max-w-md">
           <QRCodeCanvas
             id="product-qr-code"
+            className="border-4 border-[#ffffff] rounded-md"
             value={qrCodeData}
             size={256}
             level="H"

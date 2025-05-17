@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { ProductCard } from "@/types/product"
-import { fetchProductById, registerProductForUser, updateProduct } from "../../actions/product"
+import { fetchProductById, registerProductForUser, updateProductForUser, deleteProductRegistration } from "../../actions/product"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { ProductImage } from "@/components/product-image"
 import { getRarityColor } from "@/utils/rarity"
@@ -70,25 +70,39 @@ export default function ProductRegistrationContent() {
     setError(null)
 
     try {
-      const txHash = await mint(walletClient, qrPayload.id, qrPayload.nonce)
-      const result = await registerProductForUser(qrPayload.id, qrPayload.nonce, txHash)
+      let success = true;
+      const result = await registerProductForUser(qrPayload.id, qrPayload.nonce)
 
-      if (result.success) {
-        const txHash = await mint(walletClient, qrPayload.id, qrPayload.nonce)
-        const updateResult = await updateProduct(qrPayload.id, txHash)
+      if (result.registrationId) {
+        const receipt = await mint(walletClient, qrPayload.id, qrPayload.nonce)
 
+        if (receipt.status == "success") {
+          await updateProductForUser(result.registrationId, receipt.transactionHash)
+
+        } else {
+          success = false;
+          setError("Failed to register product on the blockchain")
+          await deleteProductRegistration(result.registrationId);
+        }
+
+      } else {
+        success = false;
+        setError(result.message)
+      }
+      
+      if (success) {
         sessionStorage.setItem("registeredProduct", JSON.stringify(productData))
         sessionStorage.removeItem("scannedProductPayload")
         router.push("/product-register/success")
-
-      } else {
-        setError(result.message)
       }
+
     } catch (err) {
       console.error("Error registering product:", err)
       setError("Failed to register product. Please try again.")
+
     } finally {
       setIsRegistering(false)
+      
     }
   }
 

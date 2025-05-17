@@ -54,15 +54,17 @@ export function QRScanner({ onScan, onError }: QRScannerProps) {
     // Scan for QR codes
     function scanQRCode() {
       if (!isScanning || !videoRef.current || !canvasRef.current) return
-
+      
       const video = videoRef.current
       const canvas = canvasRef.current
       const context = canvas.getContext("2d")
 
       if (!context) return
+      console.log("scanning...")
 
       // Check if video is ready
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        console.log("HAVE_ENOUGH_DATA")
         // Set canvas dimensions to match video
         canvas.height = video.videoHeight
         canvas.width = video.videoWidth
@@ -72,12 +74,13 @@ export function QRScanner({ onScan, onError }: QRScannerProps) {
 
         // Get image data for QR code detection
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+        console.log("imageData", imageData)
 
         // Detect QR code
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
           inversionAttempts: "dontInvert", // QR codes in camera are usually black on white
         })
-
+        console.log("code", code)
         // If QR code is detected
         if (code) {
           console.log("QR code detected:", code.data)

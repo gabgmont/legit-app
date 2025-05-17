@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getProductById } from "@/app/actions/product"
-import type { ProductCard } from "@/types/product"
+import type { ProductCard, ProductRegistrationCard } from "@/types/product"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { ProductImage } from "@/components/product-image"
 import { getRarityColor } from "@/utils/rarity"
 
-export default function ProductDetailContent({ id }: { id: string }) {
+export default function ProductDetailContent({ id, nonce }: { id: string, nonce: number }) {
   const router = useRouter()
-  const [product, setProduct] = useState<ProductCard | null>(null)
+  const [productRegistration, setProductRegistration] = useState<ProductRegistrationCard | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -20,7 +20,7 @@ export default function ProductDetailContent({ id }: { id: string }) {
         const productData = await getProductById(id)
 
         if (productData) {
-          setProduct(productData)
+          setProductRegistration(productData)
         } else {
           setError("Product not found or you don't have permission to view it")
         }
@@ -48,7 +48,7 @@ export default function ProductDetailContent({ id }: { id: string }) {
     )
   }
 
-  if (error || !product) {
+  if (error || !productRegistration) {
     return (
       <div className="flex flex-col h-[100dvh] bg-[#050810] text-white">
         <div className="flex-1 flex flex-col items-center justify-center px-6">
@@ -68,36 +68,43 @@ export default function ProductDetailContent({ id }: { id: string }) {
         {/* Product Image */}
         <div className="flex justify-center mb-12">
           <div className="relative w-64 h-64">
-            <ProductImage src={product.image} alt={product.name} priority />
+            <ProductImage src={productRegistration.product.image} alt={productRegistration.product.name} priority />
           </div>
         </div>
 
         {/* Product Information */}
         <div className="w-full space-y-4 mb-auto">
           <div className="border border-[#3859d4] rounded-md p-3">
-            <p className="text-white text-lg">{product.name}</p>
+            <p className="text-white text-lg">{productRegistration.product.name}</p>
           </div>
 
-          {product.brand && (
+          {productRegistration.product.brand && (
             <div className="border border-[#3859d4] rounded-md p-3">
-              <p className="text-white text-lg">Brand: {product.brand}</p>
+              <p className="text-white text-lg">Brand: {productRegistration.product.brand}</p>
             </div>
           )}
 
           <div className="border border-[#3859d4] rounded-md p-3">
-            <p className={`text-lg font-medium ${getRarityColor(product.rarity)}`}>{product.rarity} item</p>
+            <p className={`text-lg font-medium ${getRarityColor(productRegistration.product.rarity)}`}>{productRegistration.product.rarity} item</p>
           </div>
 
           {/* Display Nonce */}
           <div className="border border-[#3859d4] rounded-md p-3">
             <p className="text-white text-lg">
-              #{product.nonce} out of {product.total}
+              #{productRegistration.nonce} out of {productRegistration.product.total}
             </p>
           </div>
 
+          {/* Display Registered On */}
           <div className="border border-[#3859d4] rounded-md p-3">
-            <p className="text-white text-lg">Registered on: {product.registeredOn}</p>
+            <p className="text-white text-lg">Registered on: {productRegistration.registeredOn}</p>
           </div>
+
+          {/* Display Transaction Hash */}
+          <div className="border border-[#3859d4] rounded-md p-3">
+            <p className="text-white text-lg">Transaction: {productRegistration.txHash}</p>
+          </div>
+
         </div>
 
         {/* Go Back Button */}
