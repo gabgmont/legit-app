@@ -7,10 +7,8 @@ import { useRouter } from "next/navigation"
 import { Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { createProduct, updateProduct, deleteProduct } from "../../actions/product"
+import { createProduct } from "../../actions/product"
 import { LoadingDots } from "@/components/loading-animation"
-import { walletClient } from "@/lib/blockchain/client"
-import { registerAsset } from "@/lib/blockchain/contracts/legit-contract"
 interface User {
   id: string
   name: string
@@ -62,29 +60,9 @@ export default function ProductCreateContent({ user }: { user: User }) {
         throw new Error("Please upload a product image")
       }
       
-      let success = false;
-
       const result = await createProduct(formData)
-      if (result.productId && result.totalSupply) {
-        success = true;
-        const receipt = await registerAsset(walletClient, result.productId, result.totalSupply);
-        
-        if (receipt.status == "success") {
-          const updateResult = await updateProduct(result.productId, receipt.transactionHash)
-          if (!updateResult.success) {
-            success = false;
-            await deleteProduct(result.productId)
-            setError("Failed to update product on the database")
-          }
 
-        } else {
-          success = false;
-          await deleteProduct(result.productId)
-          setError("Failed to register product on the blockchain")
-        }
-      }
-
-      if (success) {
+      if (result.success) {
         router.push("/product-list")
       } else {
         setError(result.message)

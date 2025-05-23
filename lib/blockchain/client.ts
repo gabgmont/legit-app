@@ -1,7 +1,8 @@
 import { createWalletClient, custom } from "viem";
-import { anvil } from "viem/chains";
+import { sepolia } from "viem/chains";
 
 export const walletClient = createWalletClient({
-    chain: anvil,
+    chain: sepolia,
     transport: custom(window.ethereum),
 });
+

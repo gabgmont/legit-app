@@ -4,6 +4,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "./auth";
 import type { RarityType } from "@/types/product";
 import type { ProductCard, ProductRegistrationCard } from "@/types/product";
+import { decrypt, encrypt } from "@/utils/encryption";
+import { estimateGasToMint, mint } from "@/lib/blockchain/contracts/legit-contract";
 
 export type ProductResult = {
   success: boolean;
@@ -17,6 +19,13 @@ export type ProductRegistrationResult = {
   message: string;
   registrationId?: string;
 };
+
+export async function test() {
+  const encrypted = encrypt("abcdefg");
+  console.log("Encrypted:", encrypted);
+  const decrypted = decrypt(encrypted);
+  console.log("Decrypted:", decrypted);
+}
 
 //Product
 export async function createProduct(
@@ -59,7 +68,6 @@ export async function createProduct(
 
     const supabase = createServerSupabaseClient();
 
-    // Register product in the database
     const { data, error } = await supabase
       .from("products")
       .insert({
@@ -79,7 +87,6 @@ export async function createProduct(
       };
     }
 
-    // Upload image to the database
     let imageUrl = "";
     if (imageFile && imageFile.size > 0) {
       const arrayBuffer = await imageFile.arrayBuffer();
@@ -106,7 +113,6 @@ export async function createProduct(
       }
     }
 
-    // Update the product with the image URL and contract address
     const { error: imageError } = await supabase
       .from("products")
       .update({ image: imageUrl })
@@ -139,6 +145,44 @@ export async function createProduct(
       return {
         success: false,
         message: "Failed to upload product metadata",
+      };
+    }
+
+    // Register the asset on the blockchain
+    const { data: walletData } = await supabase
+      .from("users")
+      .select("private_key")
+      .eq("id", user.id)
+      .single();
+
+    if (!walletData) {
+      await deleteProduct(data.id);
+      return {
+        success: false,
+        message: "Failed to retrieve wallet data",
+      };
+    }
+
+    const receipt = await registerAsset(walletData.private_key, data.id, total);
+
+    if (receipt.status == "success") {
+      const updateResult = await updateProduct(
+        data.id,
+        receipt.transactionHash
+      );
+
+      if (!updateResult.success) {
+        await deleteProduct(data.id);
+        return {
+          success: false,
+          message: "Failed to update product with transaction hash",
+        };
+      }
+    } else {
+      await deleteProduct(data.id);
+      return {
+        success: false,
+        message: "Failed to register product on the blockchain",
       };
     }
 
@@ -232,10 +276,42 @@ export async function fetchProductById(
   }
 }
 
+export async function estimateGasToRegisterProduct(
+  productId: string,
+  nonce: number
+) {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return null;
+    }
+
+    const supabase = createServerSupabaseClient();
+
+    const { data: walletData } = await supabase
+      .from("users")
+      .select("private_key")
+      .eq("id", user.id)
+      .single();
+
+    if (!walletData) {
+      return null;
+    }
+
+    return await estimateGasToMint(walletData.private_key, productId, nonce);
+  } catch (error) {
+    console.error("Error estimating gas:", error);
+    return null;
+  }
+}
+
 export async function registerProductForUser(
   productId: string,
   nonce: number
 ): Promise<ProductRegistrationResult> {
+  let registrationId;
+
   try {
     const user = await getCurrentUser();
 
@@ -249,7 +325,7 @@ export async function registerProductForUser(
     const supabase = createServerSupabaseClient();
 
     // Check if this product with this nonce is already registered
-    const { data: existingRegistration, error: checkError } = await supabase
+    const { data: existingRegistration } = await supabase
       .from("product_registrations")
       .select("id")
       .eq("product_id", productId)
@@ -263,7 +339,6 @@ export async function registerProductForUser(
           "This product has already been registered with this authentication code.",
       };
     }
-
     // Insert the product-user relationship
     const { data, error } = await supabase
       .from("product_registrations")
@@ -276,11 +351,38 @@ export async function registerProductForUser(
       .select("id")
       .single();
 
+    registrationId = data?.id;
+
     if (error) {
       console.error("Error registering product for user:", error);
       return {
         success: false,
         message: "Failed to register product. Please try again.",
+      };
+    }
+    const { data: walletData } = await supabase
+      .from("users")
+      .select("private_key")
+      .eq("id", user.id)
+      .single();
+
+    if (!walletData) {
+      await deleteProductRegistration(data.id);
+      return {
+        success: false,
+        message: "Failed to retrieve wallet data",
+      };
+    }
+
+    const receipt = await mint(walletData.private_key, productId, nonce);
+
+    if (receipt.status == "success") {
+      await updateProductForUser(data.id, receipt.transactionHash);
+    } else {
+      await deleteProductRegistration(data.id);
+      return {
+        success: false,
+        message: "Failed to register transaction on the blockchain",
       };
     }
 
@@ -290,6 +392,7 @@ export async function registerProductForUser(
       registrationId: data.id,
     };
   } catch (error) {
+    if (registrationId) await deleteProductRegistration(registrationId);
     console.error("Error in registerProductForUser:", error);
     return {
       success: false,
@@ -368,7 +471,7 @@ export async function getUserProducts(): Promise<ProductRegistrationCard[]> {
       return [];
     }
     console.log(data);
-    
+
     return data.map((item) => ({
       id: item.id,
       nonce: item.nonce,
@@ -389,7 +492,9 @@ export async function getUserProducts(): Promise<ProductRegistrationCard[]> {
   }
 }
 
-export async function getProductById(id: string): Promise<ProductRegistrationCard | null> {
+export async function getProductById(
+  id: string
+): Promise<ProductRegistrationCard | null> {
   try {
     const user = await getCurrentUser();
 
@@ -420,7 +525,7 @@ export async function getProductById(id: string): Promise<ProductRegistrationCar
     }
 
     if (!data) {
-      return null; 
+      return null;
     }
 
     return {

@@ -4,6 +4,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { hashPassword } from "@/lib/utils/password"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { createWallet } from "@/lib/blockchain/server"
+import { encrypt } from "@/utils/encryption"
 
 export type RegisterResult = {
   success: boolean
@@ -22,13 +24,11 @@ export type AuthResult = {
 }
 
 export async function registerUser(formData: FormData): Promise<RegisterResult> {
-  // Validate form data
   const name = formData.get("name") as string
   const email = formData.get("email") as string
   const phone = formData.get("phone") as string
   const password = formData.get("password") as string
 
-  // Check if all fields are provided
   if (!name || !email || !phone || !password) {
     return {
       success: false,
@@ -36,7 +36,6 @@ export async function registerUser(formData: FormData): Promise<RegisterResult> 
     }
   }
 
-  // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email)) {
     return {
@@ -47,11 +46,13 @@ export async function registerUser(formData: FormData): Promise<RegisterResult> 
 
   try {
     const supabase = createServerSupabaseClient()
+    
+    const wallet = createWallet()
+    console.log("Generated wallet:", wallet)
+    const encryptedPrivateKey = encrypt(wallet.privateKey)
 
-    // Hash the password before storing
     const hashedPassword = hashPassword(password)
 
-    // Check if user already exists
     const { data: existingUser } = await supabase.from("users").select("email").eq("email", email).single()
 
     if (existingUser) {
@@ -61,7 +62,6 @@ export async function registerUser(formData: FormData): Promise<RegisterResult> 
       }
     }
 
-    // Insert the new user
     const { error, data } = await supabase
       .from("users")
       .insert({
@@ -69,6 +69,8 @@ export async function registerUser(formData: FormData): Promise<RegisterResult> 
         email,
         phone,
         password: hashedPassword,
+        private_key: encryptedPrivateKey,
+        wallet_address: wallet.account.address,
       })
       .select("id")
       .single()
@@ -81,23 +83,18 @@ export async function registerUser(formData: FormData): Promise<RegisterResult> 
       }
     }
 
-    // Create a session for the new user
     const sessionId = crypto.randomUUID()
     const cookieStore = await cookies()
 
-    // Store session in Supabase
     await supabase.from("sessions").insert({
       id: sessionId,
       user_id: data.id,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-    })
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), })
 
-    // Set the session cookie
     cookieStore.set("session_id", sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: "/",
+      maxAge: 7 * 24 * 60 * 60, path: "/",
     })
 
     return {
@@ -129,7 +126,6 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
     const supabase = createServerSupabaseClient()
     const hashedPassword = hashPassword(password)
 
-    // Query the users table to find a matching user
     const { data: user, error } = await supabase
       .from("users")
       .select("id, name, email, password")
@@ -143,7 +139,6 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
       }
     }
 
-    // Check if the password matches
     if (user.password !== hashedPassword) {
       return {
         success: false,
@@ -151,23 +146,18 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
       }
     }
 
-    // Create a session cookie
     const sessionId = crypto.randomUUID()
     const cookieStore = await cookies()
 
-    // Store session in Supabase
     await supabase.from("sessions").insert({
       id: sessionId,
       user_id: user.id,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-    })
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), })
 
-    // Set the session cookie
     cookieStore.set("session_id", sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: "/",
+      maxAge: 7 * 24 * 60 * 60, path: "/",
     })
 
     return {
@@ -199,7 +189,6 @@ export async function getCurrentUser() {
 
     const supabase = createServerSupabaseClient()
 
-    // Get the session
     const { data: session, error: sessionError } = await supabase
       .from("sessions")
       .select("user_id, expires_at")
@@ -210,19 +199,16 @@ export async function getCurrentUser() {
       return null
     }
 
-    // Check if session is expired
     if (new Date(session.expires_at) < new Date()) {
-      // Delete expired session
       await supabase.from("sessions").delete().eq("id", sessionId)
 
       cookieStore.delete("session_id")
       return null
     }
 
-    // Get the user
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("id, name, email")
+      .select("id, name, email, wallet_address")
       .eq("id", session.user_id)
       .single()
 
@@ -230,7 +216,12 @@ export async function getCurrentUser() {
       return null
     }
 
-    return user
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      walletAddress: user.wallet_address,
+    }
   } catch (error) {
     console.error("Error getting current user:", error)
     return null
@@ -245,10 +236,8 @@ export async function signOut() {
     if (sessionId) {
       const supabase = createServerSupabaseClient()
 
-      // Delete the session from the database
       await supabase.from("sessions").delete().eq("id", sessionId)
 
-      // Delete the cookie
       cookieStore.delete("session_id")
     }
 

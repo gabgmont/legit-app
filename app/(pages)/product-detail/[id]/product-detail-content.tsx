@@ -9,7 +9,6 @@ import { getRarityColor } from "@/utils/rarity";
 import type { ProductCard } from "@/types/product";
 import { generateProductAuthQRData } from "@/utils/qr-generator";
 import { walletClient } from "@/lib/blockchain/client";
-import { registerAsset, mint } from "@/lib/blockchain/contracts/legit-contract";
 import { LoadingDots } from "@/components/loading-animation";
 
 interface User {
@@ -27,8 +26,6 @@ export default function ProductDetailContent({
 }) {
   const [nonce, setNonce] = useState<number>(1);
   const [qrCodeData, setQrCodeData] = useState<string>("");
-  const [isLoadingRegister, setIsLoadingRegister] = useState(false);
-  const [isLoadingMint, setIsLoadingMint] = useState(false);
 
   useEffect(() => {
     if (product.id) {
@@ -53,27 +50,6 @@ export default function ProductDetailContent({
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
-  };
-
-  const handleRegisterOnBlockchain = async () => {
-    if (!product?.id) return;
-    try {
-      setIsLoadingRegister(true);
-      await registerAsset(walletClient, product.id, product.total);
-
-    } finally {
-      setIsLoadingRegister(false);
-    }
-  };
-
-  const handleMintToken = async () => {
-    if (!product?.id) return;
-    try {
-      setIsLoadingMint(true);
-      await mint(walletClient, product.id, nonce);
-    } finally {
-      setIsLoadingMint(false);
-    }
   };
 
   return (
@@ -185,30 +161,6 @@ export default function ProductDetailContent({
         >
           <Download className="h-5 w-5 mr-2" />
           Download qr code
-        </button>
-        <button
-          onClick={handleRegisterOnBlockchain}
-          className="bg-[#4169e1] mt-4 text-white px-6 py-3 rounded-md font-medium flex items-center justify-center w-full max-w-md"
-        >
-          {isLoadingRegister ? (
-            <span className="flex items-center justify-center">
-              Registering <LoadingDots className="ml-2" color="white" />
-            </span>
-          ) : (
-            "Register on blockchain"
-          )}
-        </button>
-        <button
-          onClick={handleMintToken}
-          className="bg-[#4169e1] mt-4 text-white px-6 py-3 rounded-md font-medium flex items-center justify-center w-full max-w-md"
-        >
-          {isLoadingMint ? (
-            <span className="flex items-center justify-center">
-              Minting <LoadingDots className="ml-2" color="white" />
-            </span>
-          ) : (
-            "Mint"
-          )}
         </button>
       </main>
     </div>

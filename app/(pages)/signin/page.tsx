@@ -1,109 +1,94 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { signIn } from "../../actions/auth"
-import { Logo } from "@/components/logo"
-import { LoadingDots } from "@/components/loading-animation"
+import { useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { signIn } from "../../actions/auth";
+import { Logo } from "@/components/logo";
+import { LoadingDots } from "@/components/loading-animation";
+import { LegitInput } from "@/components/legit-input";
+import { LegitButton } from "@/components/legit-button";
+import { CenteredContainer } from "@/components/center-container";
+import { Spacer } from "@/components/spacer";
+import { LegitLogoHorizontal } from "@/components/legit-logo";
 
 export default function SignInScreen() {
-  const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
-      e.preventDefault()
-      setIsLoading(true)
-      setError(null)
-      
-      const formData = new FormData(e.currentTarget)
-      const result = await signIn(formData)
+      e.preventDefault();
+      setIsLoading(true);
+      setError(null);
+
+      const formData = new FormData(e.currentTarget);
+      const result = await signIn(formData);
 
       if (result.success) {
-        router.push("/collection")
+        router.push("/collection");
       } else {
-        setError(result.message)
+        setError(result.message);
       }
     } catch (error) {
-      console.error("Error signing in:", error)
-      setError("An unexpected error occurred. Please try again.")
+      console.error("Error signing in:", error);
+      setError("An unexpected error occurred. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#050810] text-white">
-      {/* Logo and App Name */}
-      <div className="flex items-center justify-center mt-8 mb-4">
-        <Logo size="sm" />
-        <span className="text-xl font-semibold">Legit</span>
-      </div>
+    <CenteredContainer>
+      <LegitLogoHorizontal />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col px-8 pt-4 pb-8">
-        {/* Hoodie Image */}
-        <div className="flex justify-center mb-8">
-          <div className="relative w-48 h-48">
-            <Image src="/images/hoodie.png" alt="White hoodie" fill style={{ objectFit: "contain" }} priority />
-          </div>
+      <Spacer />
+
+      <div className="flex justify-center mb-8">
+        <div className="relative w-48 h-48">
+          <Image
+            src="/images/hoodie.png"
+            alt="White hoodie"
+            fill
+            style={{ objectFit: "contain" }}
+            priority
+          />
         </div>
-
-        <h1 className="text-4xl font-bold mb-10 text-center">Sign in</h1>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded-md mb-6">{error}</div>
-        )}
-
-        <form 
-          onSubmit={handleSubmit} 
-          className="space-y-6"
-        >
-          <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Enter your e-mail"
-              required
-              className="w-full bg-transparent border-b border-gray-700 pb-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Enter your password"
-              required
-              className="w-full bg-transparent border-b border-gray-700 pb-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-[#4169e1] text-white py-3 rounded-md font-medium mt-6 disabled:opacity-70"
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center">
-                  Authenticating <LoadingDots className="ml-2" color="white" />
-                </span>
-              ) : (
-                "Enter"
-              )}
-            </button>
-        </form>
       </div>
-    </div>
-  )
+
+      <h1 className="text-4xl font-bold mb-10 text-center">Sign in</h1>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded-md mb-6">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="w-full space-y-6">
+        <LegitInput
+          name="email"
+          type="email"
+          label="Email"
+          placeholder="Enter your e-mail"
+          required
+        />
+        <LegitInput
+          name="password"
+          type="password"
+          label="Password"
+          placeholder="Enter your password"
+          required
+        />
+        <LegitButton
+          label="Enter"
+          type="submit"
+          disabled={isLoading}
+          loading={isLoading}
+          loadingLabel="Authenticating"
+        />
+      </form>
+      <Spacer />
+    </CenteredContainer>
+  );
 }

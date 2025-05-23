@@ -1,7 +1,15 @@
 import { createPublicClient, http } from "viem";
-import { anvil } from "viem/chains";
+import { sepolia } from "viem/chains";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 export const provider = createPublicClient({
-    chain: anvil,
-    transport: http(),
+  chain: sepolia,
+  transport: http(),
 });
+
+export function createWallet() {
+  const privateKey = generatePrivateKey();
+  const account = privateKeyToAccount(privateKey);
+
+  return { account, privateKey };
+}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getProductById } from "@/app/actions/product"
-import type { ProductCard, ProductRegistrationCard } from "@/types/product"
+import type { ProductRegistrationCard } from "@/types/product"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { ProductImage } from "@/components/product-image"
 import { getRarityColor } from "@/utils/rarity"
