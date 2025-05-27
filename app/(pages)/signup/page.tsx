@@ -67,12 +67,6 @@ export default function CreateAccountScreen() {
           name="email"
         />
         <LegitInput
-          label="Phone"
-          placeholder="Enter your phone"
-          type="tel"
-          name="phone"
-        />
-        <LegitInput
           label="Password"
           placeholder="Enter your password"
           type="password"

@@ -113,17 +113,19 @@ export default function CollectionContent({ user }: { user: User }) {
       <div className="flex-none">
         {/* User Profile */}
         <div className="flex justify-between items-center px-6 py-4">
-          <div className="flex items-center relative">
+          <div className="flex items-center relative flex-1 min-w-0">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex items-center focus:outline-none"
+              className="flex items-center focus:outline-none w-full min-w-0"
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 flex items-center justify-center mr-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 flex items-center justify-center mr-3 shrink-0">
                 <span className="text-white font-semibold">{userInitial}</span>
               </div>
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col items-start min-w-0">
                 <span className="text-xl font-semibold">{user.name}</span>
-                <span className="text-sm text-gray-300">{user.walletAddress}</span>
+                <span className="text-sm text-gray-300 truncate overflow-hidden whitespace-nowrap w-full">
+                  {user.walletAddress}
+                </span>
               </div>
             </button>
 
@@ -140,9 +142,10 @@ export default function CollectionContent({ user }: { user: User }) {
               </div>
             )}
           </div>
+
           <button
             onClick={handleAddItem}
-            className="w-8 h-8 flex items-center justify-center"
+            className="w-8 h-8 flex items-center justify-center ml-4 shrink-0"
           >
             <Plus className="h-6 w-6 text-white" />
           </button>

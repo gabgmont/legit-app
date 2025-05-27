@@ -5,7 +5,8 @@ import { getCurrentUser } from "./auth";
 import type { RarityType } from "@/types/product";
 import type { ProductCard, ProductRegistrationCard } from "@/types/product";
 import { decrypt, encrypt } from "@/utils/encryption";
-import { estimateGasToMint, mint } from "@/lib/blockchain/contracts/legit-contract";
+import { estimateGasToMint, mint, registerAsset } from "@/lib/blockchain/contracts/legit-contract";
+import { dataLength } from "ethers";
 
 export type ProductResult = {
   success: boolean;
@@ -31,6 +32,9 @@ export async function test() {
 export async function createProduct(
   formData: FormData
 ): Promise<ProductResult> {
+
+  let productId;
+
   try {
     const user = await getCurrentUser();
 
@@ -85,7 +89,9 @@ export async function createProduct(
         success: false,
         message: "Failed to create product. Please try again.",
       };
-    }
+    } 
+
+    productId = data.id;
 
     let imageUrl = "";
     if (imageFile && imageFile.size > 0) {
@@ -194,6 +200,7 @@ export async function createProduct(
     };
   } catch (error) {
     console.error("Error in createProduct:", error);
+    deleteProduct(productId);
     return {
       success: false,
       message: "An unexpected error occurred. Please try again.",

@@ -53,7 +53,7 @@ export default function ProductDetailContent({
   };
 
   return (
-    <div className="min-h-screen bg-[#050810] text-white">
+    <div className="min-h-screen bg-[#05810] text-white">
       {/* Header */}
       <header className="flex items-center justify-start px-6 py-4 border-b border-gray-800">
         <div className="flex items-center mr-4">

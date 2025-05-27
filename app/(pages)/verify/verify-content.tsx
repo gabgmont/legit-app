@@ -45,8 +45,9 @@ export default function VerifyContent() {
 
       {/* NFC Option */}
       <button
-        className={`w-full border border-[#0047FF] rounded-xl p-6 flex flex-col items-center justify-center h-[180px] ${
-          verificationMethod === "nfc" ? "bg-[#0047FF]/10" : "bg-transparent"
+        disabled
+        className={`w-full border border-[#0a0e1a] rounded-xl p-6 flex flex-col items-center justify-center h-[180px] ${
+          verificationMethod === "nfc" ? "bg-[#0047FF]/10" : "bg-[#0a0e1a]"
         }`}
         onClick={() => {
           // Handle NFC scanning (would be implemented in a real app)

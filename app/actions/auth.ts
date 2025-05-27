@@ -6,6 +6,8 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createWallet } from "@/lib/blockchain/server"
 import { encrypt } from "@/utils/encryption"
+import { privateKeyToAccount } from "viem/accounts"
+import { ContractRoles, grantRole } from "@/lib/blockchain/contracts/legit-contract"
 
 export type RegisterResult = {
   success: boolean
@@ -26,10 +28,9 @@ export type AuthResult = {
 export async function registerUser(formData: FormData): Promise<RegisterResult> {
   const name = formData.get("name") as string
   const email = formData.get("email") as string
-  const phone = formData.get("phone") as string
   const password = formData.get("password") as string
 
-  if (!name || !email || !phone || !password) {
+  if (!name || !email || !password) {
     return {
       success: false,
       message: "All fields are required",
@@ -67,7 +68,6 @@ export async function registerUser(formData: FormData): Promise<RegisterResult> 
       .insert({
         name,
         email,
-        phone,
         password: hashedPassword,
         private_key: encryptedPrivateKey,
         wallet_address: wallet.account.address,
@@ -82,6 +82,8 @@ export async function registerUser(formData: FormData): Promise<RegisterResult> 
         message: "Failed to register user. Please try again.",
       }
     }
+
+    await grantRole(wallet.account.address, ContractRoles.USER)
 
     const sessionId = crypto.randomUUID()
     const cookieStore = await cookies()
