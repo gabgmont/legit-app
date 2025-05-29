@@ -9,7 +9,7 @@ import {
   toHex,
   TransactionReceipt,
 } from "viem";
-import { legitContractSepoliaV2 } from "@/app/abi/legit-contract-abi";
+import { legitContractSepoliaV3 } from "@/app/abi/legit-contract-abi";
 import { provider } from "../server";
 import { createWalletClient } from "viem";
 import { sepolia } from "viem/chains";
@@ -24,8 +24,8 @@ async function contractClient(account: Account) {
   });
 
   return getContract({
-    address: legitContractSepoliaV2.address as Address,
-    abi: legitContractSepoliaV2.abi,
+    address: legitContractSepoliaV3.address as Address,
+    abi: legitContractSepoliaV3.abi,
     client: {
       public: provider,
       wallet: walletClient,
@@ -92,7 +92,6 @@ export async function estimateGasToRegisterAsset(
   totalSupply: number
 ) {
   const privateKey = decrypt(encryptedPrivateKey);
-  console.log("Private key:", privateKey);
   const account = privateKeyToAccount(privateKey);
 
   const bytes = stringToBytes(assetKey);
@@ -114,7 +113,6 @@ export async function registerAsset(
   totalSupply: number
 ): Promise<TransactionReceipt> {
   const privateKey = decrypt(encryptedPrivateKey);
-  console.log("Private key:", privateKey);
   const account = privateKeyToAccount(privateKey);
 
   const bytes = stringToBytes(assetKey);

@@ -9,6 +9,9 @@ import Image from "next/image"
 import Link from "next/link"
 import { createProduct } from "../../actions/product"
 import { LoadingDots } from "@/components/loading-animation"
+import { useTransaction } from '../../../hooks/use-transaction'
+
+
 interface User {
   id: string
   name: string
@@ -17,6 +20,8 @@ interface User {
 
 export default function ProductCreateContent({ user }: { user: User }) {
   const router = useRouter()
+  
+  const { setLoadingTransaction, setTransactionSuccess, setTransactionError } = useTransaction();
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,8 +30,8 @@ export default function ProductCreateContent({ user }: { user: User }) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image size should be less than 5MB")
+    if (file.size > 1 * 1024 * 1024) {
+      setError("Image size should be less than 1MB")
       return
     }
 
@@ -50,6 +55,7 @@ export default function ProductCreateContent({ user }: { user: User }) {
     setError(null)
 
     const formData = new FormData(e.currentTarget)
+    let transactionError = false
 
     try {
       if (!formData.get("name") || !formData.get("brand") || !formData.get("quantity") || !formData.get("rarity")) {
@@ -60,24 +66,36 @@ export default function ProductCreateContent({ user }: { user: User }) {
         throw new Error("Please upload a product image")
       }
       
+      setLoadingTransaction(true)
       const result = await createProduct(formData)
 
       if (result.success) {
         router.push("/product-list")
       } else {
+        transactionError = true
         setError(result.message)
       }
       
     } catch (err) {
+      transactionError = true
       console.error("Error creating product:", err)
       setError((err as Error).message || "Failed to create product")
+
     } finally {
       setIsSubmitting(false)
+      setLoadingTransaction(false)
+
+      if (transactionError) {
+        setTransactionError()
+      } else {
+        setTransactionSuccess()
+      }
     }
   }
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-[#050810] text-white">
+      
       {/* Header */}
       <header className="flex items-center justify-start px-6 py-4 border-b border-gray-800">
         <div className="flex items-center mr-4">

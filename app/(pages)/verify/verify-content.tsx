@@ -24,9 +24,7 @@ export default function VerifyContent() {
       </p>
 
       <button
-        className={`w-full border border-[#0047FF] rounded-xl p-6 flex flex-col items-center justify-center h-[180px] ${
-          verificationMethod === "qr" ? "bg-[#0047FF]/10" : "bg-transparent"
-        }`}
+        className='w-full border border-[#0047FF] rounded-xl p-6 flex flex-col items-center justify-center h-[180px] bg-transparent'
         onClick={() => router.push("/scanner")}
       >
         <div className="w-24 h-24 mb-4 flex items-center justify-center">
@@ -46,9 +44,7 @@ export default function VerifyContent() {
       {/* NFC Option */}
       <button
         disabled
-        className={`w-full border border-[#0a0e1a] rounded-xl p-6 flex flex-col items-center justify-center h-[180px] ${
-          verificationMethod === "nfc" ? "bg-[#0047FF]/10" : "bg-[#0a0e1a]"
-        }`}
+        className='w-full border border-[#0a0e1a] rounded-xl p-6 flex flex-col items-center justify-center h-[180px] bg-[#0a0e1a]'
         onClick={() => {
           // Handle NFC scanning (would be implemented in a real app)
           alert("NFC scanning would start here");

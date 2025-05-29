@@ -14,6 +14,8 @@ import { getRarityColor } from "@/utils/rarity";
 import { CenteredContainer } from "@/components/center-container";
 import { LegitButton, LegitButtonOutline } from "@/components/legit-button";
 import { Spacer } from "@/components/spacer";
+import { useTransaction } from "@/hooks/use-transaction";
+import { el } from "date-fns/locale";
 
 interface QRCodePayload {
   id: string;
@@ -22,6 +24,8 @@ interface QRCodePayload {
 
 export default function ProductRegistrationContent() {
   const router = useRouter();
+  
+  const { setLoadingTransaction, setTransactionSuccess, setTransactionError } = useTransaction();
   const [isRegistering, setIsRegistering] = useState(false);
   const [productData, setProductData] = useState<ProductCard | null>(null);
   const [qrPayload, setQrPayload] = useState<QRCodePayload | null>(null);
@@ -87,13 +91,16 @@ export default function ProductRegistrationContent() {
   }, []);
 
   const handleRegister = async () => {
-    setIsRegistering(true);
-
+    setIsRegistering(true)
+    
     if (!productData || !qrPayload) {
       setError("No product data to register");
       return;
     }
     setError(null);
+
+    setLoadingTransaction(true)
+    let error = false;
 
     try {
       const result = await registerProductForUser(
@@ -108,10 +115,23 @@ export default function ProductRegistrationContent() {
         );
         sessionStorage.removeItem("scannedProductPayload");
         router.push("/product-register/success");
+
+      } else {
+        error = true;
       }
     } catch (err) {
+      error = true
       console.error("Error registering product:", err);
       setError("Failed to register product. Please try again.");
+
+    } finally {
+      setIsRegistering(false)
+      
+      if (error) {
+        setTransactionError()
+      } else {
+        setTransactionSuccess()
+      }
     }
   };
 
